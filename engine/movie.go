@@ -2,16 +2,16 @@ package engine
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"gorm.io/gorm/clause"
 
+	"github.com/metatube-community/metatube-sdk-go/collections"
 	"github.com/metatube-community/metatube-sdk-go/common/comparer"
 	"github.com/metatube-community/metatube-sdk-go/common/number"
-	"github.com/metatube-community/metatube-sdk-go/common/priority"
-	"github.com/metatube-community/metatube-sdk-go/engine/internal/utils"
 	"github.com/metatube-community/metatube-sdk-go/model"
 	mt "github.com/metatube-community/metatube-sdk-go/provider"
 )
@@ -57,10 +57,10 @@ func (e *Engine) searchMovie(keyword string, provider mt.MovieProvider, fallback
 					// overwrite error.
 					err = nil
 					// update results.
-					msr := utils.NewSearchResultSet[*model.MovieSearchResult]()
+					msr := collections.NewOrderedSet(func(v *model.MovieSearchResult) string { return v.Provider + v.ID })
 					msr.Add(results...)
 					msr.Add(innerResults...)
-					results = msr.Results()
+					results = msr.Slice()
 				}
 			}()
 		}
@@ -158,11 +158,11 @@ func (e *Engine) SearchMovieAll(keyword string, fallback bool) (results []*model
 			return
 		}
 		// remove duplicate results, if any.
-		msr := utils.NewSearchResultSet[*model.MovieSearchResult]()
+		msr := collections.NewOrderedSet(func(v *model.MovieSearchResult) string { return v.Provider + v.ID })
 		msr.Add(results...)
-		results = msr.Results()
+		results = msr.Slice()
 		// post-processing
-		ps := new(priority.Slice[float64, *model.MovieSearchResult])
+		ps := new(collections.WeightedSlice[float64, *model.MovieSearchResult])
 		for _, result := range results {
 			if !result.Valid() /* validation check */ {
 				continue
@@ -171,10 +171,12 @@ func (e *Engine) SearchMovieAll(keyword string, fallback bool) (results []*model
 				e.logger.Printf("ignore provider %s as not found", result.Provider)
 				continue
 			}
-			ps.Append(comparer.Compare(keyword, result.Number)*float64(e.MustGetMovieProviderByName(result.Provider).Priority()), result)
+			priority := comparer.Compare(keyword, result.Number) *
+				e.MustGetMovieProviderByName(result.Provider).Priority()
+			ps.Append(priority, result)
 		}
 		// sort according to priority.
-		results = ps.Stable().Underlying()
+		results = ps.SortFunc(sort.Stable).Underlying()
 	}()
 
 	if fallback /* query database for missing results  */ {

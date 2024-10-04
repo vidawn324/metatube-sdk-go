@@ -8,13 +8,12 @@ import (
 	"slices"
 	"time"
 
-	"github.com/iancoleman/orderedmap"
-	"go.uber.org/atomic"
-
+	"github.com/metatube-community/metatube-sdk-go/collections"
 	"github.com/metatube-community/metatube-sdk-go/common/fetch"
 	"github.com/metatube-community/metatube-sdk-go/common/singledo"
 	"github.com/metatube-community/metatube-sdk-go/model"
 	"github.com/metatube-community/metatube-sdk-go/provider"
+	"github.com/metatube-community/metatube-sdk-go/provider/internal/scraper"
 )
 
 var (
@@ -35,29 +34,16 @@ const (
 	jsonURL    = "https://raw.githubusercontent.com/gfriends/gfriends/master/Filetree.json"
 )
 
-var (
-	_baseURL = mustParse(baseURL)
-	_fetcher = fetch.Default(nil)
-)
-
 type Gfriends struct {
-	priority *atomic.Int64
+	*scraper.Scraper
 }
 
-func New() *Gfriends { return &Gfriends{atomic.NewInt64(Priority)} }
-
-func (gf *Gfriends) Name() string { return Name }
-
-func (gf *Gfriends) Priority() int64 { return gf.priority.Load() }
-
-func (gf *Gfriends) SetPriority(v int64) { gf.priority.Store(v) }
-
-func (gf *Gfriends) URL() *url.URL { return _baseURL }
-
-func (gf *Gfriends) NormalizeActorID(id string) string { return id /* AS IS */ }
+func New() *Gfriends {
+	return &Gfriends{scraper.NewDefaultScraper(Name, baseURL, Priority, scraper.WithDisableCookies())}
+}
 
 func (gf *Gfriends) GetActorInfoByID(id string) (*model.ActorInfo, error) {
-	images, err := defaultFileTree.query(id)
+	images, err := _fileTree.query(id)
 	if len(images) == 0 {
 		if err != nil {
 			return nil, err
@@ -106,13 +92,16 @@ func (gf *Gfriends) SearchActor(keyword string) (results []*model.ActorSearchRes
 	return
 }
 
-var defaultFileTree = newFileTree(2 * time.Hour)
+var (
+	_fileTree = newFileTree(2 * time.Hour)
+	_fetcher  = fetch.Default(nil)
+)
 
 type fileTree struct {
 	single *singledo.Single
 
 	// `Content`
-	Content *orderedmap.OrderedMap `json:"Content"`
+	Content *collections.OrderedMap[string, *collections.OrderedMap[string, string]] `json:"Content"`
 
 	// `Information`
 	//Information struct {
@@ -125,7 +114,7 @@ type fileTree struct {
 func newFileTree(wait time.Duration) *fileTree {
 	return &fileTree{
 		single:  singledo.NewSingle(wait),
-		Content: orderedmap.New(),
+		Content: collections.NewOrderedMap[string, *collections.OrderedMap[string, string]](),
 	}
 }
 
@@ -136,15 +125,11 @@ func (ft *fileTree) query(s string) (images []string, err error) {
 		return nil, nil
 	})
 	// query
-	for _, c := range ft.Content.Keys() {
-		if o, ok := ft.Content.Get(c); ok {
-			am := o.(orderedmap.OrderedMap)
-			for _, n := range am.Keys() {
-				if n[:len(n)-len(path.Ext(n))] == s /* exact match */ {
-					p, _ := am.Get(n)
-					if u, e := url.Parse(fmt.Sprintf(contentURL, c, p.(string))); e == nil {
-						images = append(images, u.String())
-					}
+	for co, am := range ft.Content.Iterator() {
+		for n, p := range am.Iterator() {
+			if n[:len(n)-len(path.Ext(n))] == s /* exact match */ {
+				if u, e := url.Parse(fmt.Sprintf(contentURL, co, p)); e == nil {
+					images = append(images, u.String())
 				}
 			}
 		}
@@ -162,14 +147,6 @@ func (ft *fileTree) update() error {
 	return json.NewDecoder(resp.Body).Decode(ft)
 }
 
-func mustParse(rawURL string) *url.URL {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		panic(err)
-	}
-	return u
-}
-
 func init() {
-	provider.RegisterActorFactory(Name, New)
+	provider.Register(Name, New)
 }

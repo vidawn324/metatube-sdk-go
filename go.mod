@@ -10,6 +10,7 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/corona10/goimagehash v1.1.0
 	github.com/docker/go-units v0.5.0
+	github.com/elliotchance/orderedmap/v2 v2.4.0
 	github.com/esimov/pigo v1.4.7-0.20230220101645-e922e5442d38
 	github.com/gen2brain/jpegli v0.2.3
 	github.com/gin-gonic/gin v1.10.0
@@ -19,22 +20,24 @@ require (
 	github.com/grafov/m3u8 v0.12.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/go-retryablehttp v0.7.7
-	github.com/iancoleman/orderedmap v0.3.0
 	github.com/jellydator/ttlcache/v3 v3.3.0
+	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.9
 	github.com/nlnwa/whatwg-url v0.5.0
 	github.com/peterbourgon/ff/v3 v3.4.0
-	github.com/projectdiscovery/useragent v0.0.71
-	github.com/projectdiscovery/utils v0.2.11
+	github.com/projectdiscovery/useragent v0.0.72
+	github.com/projectdiscovery/utils v0.2.12
 	github.com/robertkrimen/otto v0.4.0
 	github.com/stretchr/testify v1.9.0
 	github.com/zijiren233/google-translator v1.0.1
 	github.com/zijiren233/openai-translator v0.2.1
 	go.eigsys.de/gin-cachecontrol/v2 v2.2.0
 	go.uber.org/atomic v1.11.0
-	golang.org/x/image v0.20.0
-	golang.org/x/net v0.29.0
-	golang.org/x/text v0.18.0
+	go.uber.org/automaxprocs v1.6.0
+	golang.org/x/exp v0.0.0-20241004190924-225e2abe05e6
+	golang.org/x/image v0.21.0
+	golang.org/x/net v0.30.0
+	golang.org/x/text v0.19.0
 	gorm.io/datatypes v1.2.2
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.12
@@ -48,7 +51,7 @@ require (
 	github.com/antchfx/xpath v1.3.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bits-and-blooms/bitset v1.14.3 // indirect
-	github.com/bytedance/sonic v1.12.2 // indirect
+	github.com/bytedance/sonic v1.12.3 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
@@ -73,7 +76,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -89,16 +91,15 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
-	github.com/sashabaranov/go-openai v1.30.1 // indirect
+	github.com/sashabaranov/go-openai v1.31.0 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	github.com/tetratelabs/wazero v1.8.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
-	golang.org/x/arch v0.10.0 // indirect
-	golang.org/x/crypto v0.27.0 // indirect
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
+	golang.org/x/arch v0.11.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect

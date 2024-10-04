@@ -16,15 +16,15 @@ import (
 
 	"github.com/antchfx/htmlquery"
 	"github.com/gocolly/colly/v2"
-	"github.com/iancoleman/orderedmap"
 	"golang.org/x/net/html"
 
+	"github.com/metatube-community/metatube-sdk-go/collections"
 	"github.com/metatube-community/metatube-sdk-go/common/comparer"
 	"github.com/metatube-community/metatube-sdk-go/common/number"
 	"github.com/metatube-community/metatube-sdk-go/common/parser"
 	"github.com/metatube-community/metatube-sdk-go/model"
 	"github.com/metatube-community/metatube-sdk-go/provider"
-	"github.com/metatube-community/metatube-sdk-go/provider/internal/imhelper"
+	"github.com/metatube-community/metatube-sdk-go/provider/internal/imcmp"
 	"github.com/metatube-community/metatube-sdk-go/provider/internal/scraper"
 )
 
@@ -331,24 +331,31 @@ func (fz *FANZA) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, err er
 	})
 
 	// In case of any duplication
-	previewImageSet := orderedmap.New()
+	previewImageSet := collections.NewOrderedSet(func(v string) string { return v })
+	extractImageSrc := func(e *colly.XMLElement) string {
+		src := e.ChildAttr(`.//img`, "data-lazy")
+		if strings.TrimSpace(src) == "" {
+			src = e.ChildAttr(`.//img`, "src")
+		}
+		return src
+	}
 
 	// Preview Images Digital/DVD
 	c.OnXML(`//*[@id="sample-image-block"]//a[@name="sample-image"]`, func(e *colly.XMLElement) {
-		previewImageSet.Set(e.Request.AbsoluteURL(PreviewSrc(e.ChildAttr(`.//img`, "src"))), nil)
+		previewImageSet.Add(e.Request.AbsoluteURL(PreviewSrc(extractImageSrc(e))))
 	})
 
 	// Preview Images Digital (Fallback)
 	c.OnXML(`//*[@id="sample-image-block"]/a`, func(e *colly.XMLElement) {
-		if len(previewImageSet.Keys()) == 0 {
+		if previewImageSet.Len() == 0 {
 			return
 		}
-		previewImageSet.Set(e.Request.AbsoluteURL(PreviewSrc(e.ChildAttr(`.//img`, "src"))), nil)
+		previewImageSet.Add(e.Request.AbsoluteURL(PreviewSrc(extractImageSrc(e))))
 	})
 
 	// Final Preview Images
 	c.OnScraped(func(_ *colly.Response) {
-		info.PreviewImages = append(info.PreviewImages, previewImageSet.Keys()...)
+		info.PreviewImages = previewImageSet.Slice()
 	})
 
 	// Final (images)
@@ -373,7 +380,7 @@ func (fz *FANZA) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, err er
 			return
 		}
 
-		if imhelper.Similar(info.ThumbURL, info.PreviewImages[0], nil) {
+		if imcmp.Similar(info.ThumbURL, info.PreviewImages[0], nil) {
 			// the first preview image is a big thumb image.
 			info.BigThumbURL = info.PreviewImages[0]
 			info.PreviewImages = info.PreviewImages[1:]
@@ -655,5 +662,5 @@ func PreviewSrc(s string) string {
 }
 
 func init() {
-	provider.RegisterMovieFactory(Name, New)
+	provider.Register(Name, New)
 }
